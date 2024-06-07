@@ -2,8 +2,6 @@ package driplang
 
 import (
 	"time"
-
-	"github.com/micvbang/go-helpy/inty"
 )
 
 var minTime = time.Time{}
@@ -49,19 +47,19 @@ func evaluate(e Expr, evs []Event, mustBeAfter time.Time) (evsIndex int, satisfi
 		ai, a, aAfter := evaluate(v.A, evs, mustBeAfter)
 		bi, b, bAfter := evaluate(v.B, evs, mustBeAfter)
 		if a && b {
-			// Neither index will be  < 0, use the minimum one
-			return inty.Min(ai, bi), true, aAfter || bAfter
+			// Neither index will be < 0, use the minimum one
+			return min(ai, bi), true, aAfter || bAfter
 		}
 
 		// One index is < 0, use the maximum one
-		return inty.Max(ai, bi), a || b, aAfter || bAfter
+		return max(ai, bi), a || b, aAfter || bAfter
 
 	case And:
 		ai, a, aAfter := evaluate(v.A, evs, mustBeAfter)
 		bi, b, bAfter := evaluate(v.B, evs, mustBeAfter)
 		if a && b {
 			// Both indices >= 0, use maximum one
-			return inty.Max(ai, bi), true, aAfter && bAfter
+			return max(ai, bi), true, aAfter && bAfter
 		}
 		// One index is false, use neither one
 		return -1, false, false

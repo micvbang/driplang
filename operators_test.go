@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/micvbang/driplang"
 	"github.com/micvbang/go-helpy/stringy"
 	"github.com/stretchr/testify/require"
-	driplang "gitlab.com/micvbang/event-dripper/internal/eventtriggering/driplang"
 )
 
-// TestEventNames verifies that GetNames returns all EventNames used in an
+// TestNames verifies that Names returns all EventNames used in an
 // expression.
-func TestEventNames(t *testing.T) {
+func TestNames(t *testing.T) {
 	const (
 		name1 = "1"
 		name2 = "2"
@@ -34,7 +34,7 @@ func TestEventNames(t *testing.T) {
 		},
 	}
 
-	names := stringy.MakeSet(driplang.GetNames(expr)...)
+	names := stringy.MakeSet(driplang.Names(expr)...)
 
 	require.Equal(t, 4, len(names))
 	require.True(t, names.Contains(name1))

@@ -4,38 +4,38 @@ import (
 	"testing"
 	"time"
 
+	"github.com/micvbang/driplang"
 	"github.com/micvbang/go-helpy/timey"
 	"github.com/stretchr/testify/require"
-	driplang "gitlab.com/micvbang/event-dripper/internal/eventtriggering/driplang"
 )
 
 /*
-TestEvaluateNeverXThenYFollowedByX verifies that the following logic works
-as expected: "there never was 2, then there is 1 followed by 2"
+TestEvaluateNeverXThenYFollowedByX verifies that the following logic works as
+expected: "there never was 2, then there is 1 followed by 2"
 
-My intuition incorrectly told me that the above logic could be expressed
-by the expression `(NOT 2) THEN (1 THEN 2)`, but this is wrong; a counter
-example is as follows:
+My intuition incorrectly told me that the above logic could be expressed by the
+expression `(NOT 2) THEN (1 THEN 2)`, but this is wrong; a counter example is as
+follows:
 
-For events [3, 2, 1, 2], `NOT 2` is satisfied by the sequence [3], while
-`1 THEN 2` is satisfied by the sequence `[2, 1, 2]`.
+For events [3, 2, 1, 2], `NOT 2` is satisfied by the sequence [3], while `1 THEN
+2` is satisfied by the sequence `[2, 1, 2]`.
 
 In order to encode the logic, we have to ensure that the second term of the
 `THEN` expression is not satisfied if there is a `2` in the sequence.
 
-The way to correctly express the logic is: `(NOT 2) THEN ((NOT 2 AND 1) THEN 2)`.
-For events [3, 2, 1, 2] `NOT 2` will again be satisfied by [] or [3], but
+The way to correctly express the logic is: `(NOT 2) THEN ((NOT 2 AND 1) THEN
+2)`.  For events [3, 2, 1, 2] `NOT 2` will again be satisfied by [] or [3], but
 `(NOT 2) AND 1` will not be satisfied by [3, 2] nor [3]. This means that the
 whole expression can't be satisfied by the sequence which is exactly what we
 want.
 
-					THEN
-					/	\
-				NOT 2	THEN
-						/  \
-					  AND	2
-					 /   \
-				  NOT 2   1
+		THEN
+		/	\
+	NOT 2	THEN
+			/  \
+		  AND	2
+		 /   \
+	  NOT 2   1
 */
 func TestEvaluateNeverXThenYFollowedByX(t *testing.T) {
 	const (
@@ -92,6 +92,8 @@ func TestEvaluateNeverXThenYFollowedByX(t *testing.T) {
 	}
 }
 
+// TestEvaluateSimpleAnd verifies that simple And expressions are only satisfied
+// when both sides are satisfied.
 func TestEvaluateSimpleAnd(t *testing.T) {
 	const (
 		eventName1 = "event1"
@@ -99,8 +101,8 @@ func TestEvaluateSimpleAnd(t *testing.T) {
 	)
 
 	events := []driplang.Event{
-		driplang.Event{Name: eventName2},
-		driplang.Event{Name: eventName1},
+		{Name: eventName2},
+		{Name: eventName1},
 	}
 
 	tests := map[string]struct {
@@ -144,6 +146,8 @@ func TestEvaluateSimpleAnd(t *testing.T) {
 	}
 }
 
+// TestEvaluateSimpleOr verifies that simple Or expressions are satisfied when
+// at least one of the sides are satisfied.
 func TestEvaluateSimpleOr(t *testing.T) {
 	const (
 		eventName1 = "event1"
@@ -151,8 +155,8 @@ func TestEvaluateSimpleOr(t *testing.T) {
 	)
 
 	events := []driplang.Event{
-		driplang.Event{Name: eventName1},
-		driplang.Event{Name: eventName2},
+		{Name: eventName1},
+		{Name: eventName2},
 	}
 
 	tests := map[string]struct {
@@ -195,6 +199,9 @@ func TestEvaluateSimpleOr(t *testing.T) {
 		})
 	}
 }
+
+// TestEvaluateSimpleNot verifies that simple Not expressions are satisfied only
+// when the underlying value isn't.
 func TestEvaluateSimpleNot(t *testing.T) {
 	const (
 		eventName1 = "event1"
@@ -202,10 +209,10 @@ func TestEvaluateSimpleNot(t *testing.T) {
 	)
 
 	events := []driplang.Event{
-		driplang.Event{Name: eventName1},
-		driplang.Event{Name: eventName1},
-		driplang.Event{Name: eventName2},
-		driplang.Event{Name: eventName1},
+		{Name: eventName1},
+		{Name: eventName1},
+		{Name: eventName2},
+		{Name: eventName1},
 	}
 
 	tests := map[string]struct {
@@ -233,6 +240,11 @@ func TestEvaluateSimpleNot(t *testing.T) {
 	}
 }
 
+// TestEvaluateSimpleAfter that After expressions only are satisfied when what
+// they follow is within the correct time frame, e.g. "there was 1 and then at
+// least 10 hours passed before 2"
+// Additionally, it's verified that After expressions can only be satisfied if
+// they're placed as Then.B.
 func TestEvaluateSimpleAfter(t *testing.T) {
 	const (
 		eventName1 = "event1"
@@ -241,10 +253,10 @@ func TestEvaluateSimpleAfter(t *testing.T) {
 
 	now := time.Now()
 	events := []driplang.Event{
-		driplang.Event{Name: eventName1, Time: timey.AddHours(now, -20)},
-		driplang.Event{Name: eventName1, Time: timey.AddHours(now, -10)},
-		driplang.Event{Name: eventName2, Time: timey.AddHours(now, -5)},
-		driplang.Event{Name: eventName1, Time: timey.AddHours(now, 0)},
+		{Name: eventName1, Time: timey.AddHours(now, -20)},
+		{Name: eventName1, Time: timey.AddHours(now, -10)},
+		{Name: eventName2, Time: timey.AddHours(now, -5)},
+		{Name: eventName1, Time: timey.AddHours(now, 0)},
 	}
 
 	tests := map[string]struct {
@@ -252,9 +264,14 @@ func TestEvaluateSimpleAfter(t *testing.T) {
 		expr     driplang.Expr
 	}{
 		"1 AFTER 10h": {
-			// NOTE: a naked After expression should never be true since we
-			// don't have a point in time to relate After.A, making After.D
-			// unused. The query simply doesn't make sense.
+			// NOTE: a naked After expression (one that isn't the right side of
+			// a THEN expression) should never be true since we don't have a
+			// point in time to relate After.A, making After.D unused. The query
+			// simply does not make sense.
+			// It would probably be nicer to simply rework the language such
+			// that this construct isn't possible. One suggestion I got was to
+			// merge After and Then, making the duration an optional part of
+			// Then.
 			expected: false,
 			expr: driplang.After{
 				A: driplang.EventName(eventName1),
@@ -342,8 +359,8 @@ func TestEvaluateSimpleAfter(t *testing.T) {
 	}
 }
 
-// TestEvaluateAfterNotAllHappensAfter verifies that an After expression only
-// is satisfied if ALL events that satisfy sub-expressions happen AFTER After.D.
+// TestEvaluateAfterNotAllHappensAfter verifies that an After expression only is
+// satisfied if ALL events that satisfy sub-expressions happen AFTER After.D.
 func TestEvaluateAfterNotAllHappensAfter(t *testing.T) {
 	const (
 		eventName1 = "event1"
@@ -370,19 +387,19 @@ func TestEvaluateAfterNotAllHappensAfter(t *testing.T) {
 		"not all within duration constraint": {
 			expected: false,
 			events: []driplang.Event{
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -100)},
+				{Name: eventName1, Time: timey.AddHours(now, -100)},
 				// NOTE: eventName2 happens BEFORE the After.D constraint
-				driplang.Event{Name: eventName2, Time: timey.AddHours(now, -99)},
-				driplang.Event{Name: eventName3, Time: timey.AddHours(now, -1)},
+				{Name: eventName2, Time: timey.AddHours(now, -99)},
+				{Name: eventName3, Time: timey.AddHours(now, -1)},
 			},
 		},
 		"all within duration constraint": {
 			expected: true,
 			events: []driplang.Event{
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -100)},
+				{Name: eventName1, Time: timey.AddHours(now, -100)},
 				// NOTE: eventName2 happens AFTER the After.D constraint
-				driplang.Event{Name: eventName2, Time: timey.AddHours(now, -1)},
-				driplang.Event{Name: eventName3, Time: timey.AddHours(now, -1)},
+				{Name: eventName2, Time: timey.AddHours(now, -1)},
+				{Name: eventName3, Time: timey.AddHours(now, -1)},
 			},
 		},
 	}
@@ -406,14 +423,14 @@ func TestEvaluateAfterTimeOfUnrelatedEventIsUsed(t *testing.T) {
 
 	now := time.Now()
 	events := []driplang.Event{
-		driplang.Event{Name: eventName1, Time: timey.AddHours(now, -100)},
+		{Name: eventName1, Time: timey.AddHours(now, -100)},
 
 		// NOTE: this event should _NOT_ cause the evaluation of the expression
 		// to become false
-		driplang.Event{Name: eventName1, Time: timey.AddHours(now, -99)},
+		{Name: eventName1, Time: timey.AddHours(now, -5)},
 
-		driplang.Event{Name: eventName2, Time: timey.AddHours(now, -1)},
-		driplang.Event{Name: eventName3, Time: timey.AddHours(now, -1)},
+		{Name: eventName2, Time: timey.AddHours(now, -1)},
+		{Name: eventName3, Time: timey.AddHours(now, -1)},
 	}
 	expr := driplang.Then{
 		A: driplang.EventName(eventName1),
@@ -429,8 +446,8 @@ func TestEvaluateAfterTimeOfUnrelatedEventIsUsed(t *testing.T) {
 	require.True(t, driplang.Evaluate(expr, events))
 }
 
-// TestThenBExprBoundary verifies that a bounds check in the evaluation of
-// Then does is run, avoiding an out of bounds panic.
+// TestThenBExprBoundary verifies that a bounds check in the evaluation of Then
+// is run, avoiding an out of bounds panic.
 // The panic was caused by an index of -1 being returned in Then, which was
 // incorrectly being used to index into a slice to gain the Time of the latest
 // Then.A event.
@@ -447,10 +464,10 @@ func TestThenBExprBoundary(t *testing.T) {
 	require.Equal(t, true, driplang.Evaluate(expr, makeEvents(eventName2)))
 }
 
-// TestAfterSatisfiedByLaterEvent verifies that the After operator is
-// satisfied only after both After.A AND After.D are satisfied, and allows
-// events that satisfy only After.A to arrive before an event that satisfies
-// both After.A and After.D. See test case "second event" for an example.
+// TestAfterSatisfiedByLaterEvent verifies that the After operator is satisfied
+// only after both After.A AND After.D are satisfied, and allows events that
+// satisfy only After.A to arrive before an event that satisfies both After.A
+// and After.D. See test case "second event" for an example.
 func TestAfterSatisfiedByLaterEvent(t *testing.T) {
 	const (
 		eventName1 = "event1"
@@ -473,16 +490,16 @@ func TestAfterSatisfiedByLaterEvent(t *testing.T) {
 		"first event": {
 			expected: true,
 			events: []driplang.Event{
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -20)},
-				driplang.Event{Name: eventName2, Time: timey.AddHours(now, 0)},
+				{Name: eventName1, Time: timey.AddHours(now, -20)},
+				{Name: eventName2, Time: timey.AddHours(now, 0)},
 			},
 		},
 		"second event": {
 			expected: true,
 			events: []driplang.Event{
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -20)},
-				driplang.Event{Name: eventName2, Time: timey.AddHours(now, -19)},
-				driplang.Event{Name: eventName2, Time: timey.AddHours(now, -1)},
+				{Name: eventName1, Time: timey.AddHours(now, -20)},
+				{Name: eventName2, Time: timey.AddHours(now, -19)},
+				{Name: eventName2, Time: timey.AddHours(now, -1)},
 			},
 		},
 	}
@@ -493,6 +510,8 @@ func TestAfterSatisfiedByLaterEvent(t *testing.T) {
 	}
 }
 
+// TestAfterNot verifies that After is satisfied when a certain event _has not
+// happened_ in a certain timeframe, e.g. "1 happened and then 2 did not happen fro X time"
 func TestAfterNot(t *testing.T) {
 	const (
 		eventName1 = "event1"
@@ -522,16 +541,16 @@ func TestAfterNot(t *testing.T) {
 		"2 exists": {
 			expected: false,
 			events: []driplang.Event{
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -20)},
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -10)},
-				driplang.Event{Name: eventName2, Time: timey.AddHours(now, -1)},
+				{Name: eventName1, Time: timey.AddHours(now, -20)},
+				{Name: eventName1, Time: timey.AddHours(now, -10)},
+				{Name: eventName2, Time: timey.AddHours(now, -1)},
 			},
 		},
 		"2 not exists": {
 			expected: true,
 			events: []driplang.Event{
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -20)},
-				driplang.Event{Name: eventName1, Time: timey.AddHours(now, -10)},
+				{Name: eventName1, Time: timey.AddHours(now, -20)},
+				{Name: eventName1, Time: timey.AddHours(now, -10)},
 			},
 		},
 	}
@@ -549,10 +568,10 @@ func TestEvaluateSimpleNested(t *testing.T) {
 	)
 
 	events := []driplang.Event{
-		driplang.Event{Name: eventName1},
-		driplang.Event{Name: eventName1},
-		driplang.Event{Name: eventName2},
-		driplang.Event{Name: eventName1},
+		{Name: eventName1},
+		{Name: eventName1},
+		{Name: eventName2},
+		{Name: eventName1},
 	}
 
 	tests := map[string]struct {
@@ -586,7 +605,7 @@ func TestEvaluateSimpleNested(t *testing.T) {
 	}
 }
 
-func TestTriggersThen(t *testing.T) {
+func TestEvaluateThen(t *testing.T) {
 	const (
 		eventName1 = "event1"
 		eventName2 = "event2"

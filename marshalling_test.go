@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/micvbang/driplang"
 	"github.com/stretchr/testify/require"
-	driplang "gitlab.com/micvbang/event-dripper/internal/eventtriggering/driplang"
 )
 
 // TestMarshalEqualUnmarshal verifies that the result of Marshalling and

@@ -61,7 +61,7 @@ func marshalABOperator(name string, a, b Expr) ([]byte, error) {
 	return []byte(fmt.Sprintf(`{"operator": "%s", "a": %v, "b": %v}`, name, string(opa), string(opb))), nil
 }
 
-// Unmarshal unmarshals a marshalled Expr.
+// Unmarshal unmarshals an Expr.
 func Unmarshal(bs []byte) (Expr, error) {
 	m := map[string]interface{}{}
 	err := json.Unmarshal(bs, &m)
